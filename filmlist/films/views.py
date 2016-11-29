@@ -1,136 +1,141 @@
-from rest_framework import status
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
 from films.models import *
 from films.serializers import *
+from django.http import Http404
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 
 
-@api_view(['GET', 'POST'])
-def film_list(request, format=None):
+class FilmList(APIView):
     """
     List all films, or create a new film.
     """
-    if request.method == 'GET':
+    def get(self, request, format=None):
         films = Film.objects.all()
-        serializer = FilmSerializer(films, many=True)
-        return Response(serializer.data)
+        serialized_films = FilmSerializer(films, many=True)
+        return Response(serialized_films.data)
 
-    elif request.method == 'POST':
-        serializer = FilmWriteSerializer(data=request.data)
-        print(serializer)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, format=None):
+        film = FilmSerializer(data=request.data)
+        if film.is_valid():
+            film.save()
+            return Response(film.data, status=status.HTTP_201_CREATED)
+        return Response(film.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET', 'PUT', 'DELETE'])
-def film_detail(request, pk, format=None):
+class FilmDetail(APIView):
     """
     Retrieve, update or delete a film instance.
     """
-    try:
-        film = Film.objects.get(pk=pk) #Django ORM method, retrieves specific film
-    except Film.DoesNotExist: 
-        return Response(status=status.HTTP_404_NOT_FOUND)
+    def get_object(self, pk):
+        try:
+            return Film.objects.get(pk=pk)
+        except Film.DoesNotExist:
+            raise Http404
 
-    if request.method == 'GET':
-        serializedFilm = FilmSerializer(instance=film) # serialize film to JSON
-        return Response(serializedFilm.data) # return serialized film
+    def get(self, request, pk, format=None):
+        film = self.get_object(pk)
+        serialized_film = FilmSerializer(film)
+        return Response(serialized_film.data)
 
-    elif request.method == 'PUT':
-        serializedFilm = FilmSerializer(film, data=request.data) # takes data in and serializes to python
-        if serializedFilm.is_valid():
-            serializedFilm.save() # save the updated film
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def put(self, request, pk, format=None):
+        film = self.get_object(pk)
+        serialized_film = FilmSerializer(film, data=request.data)
+        if serialized_film.is_valid():
+            serialized_film.save()
+            return Response(serialized_film.data)
+        return Response(serialized_film.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == 'DELETE':
+    def delete(self, request, pk, format=None):
+        film = self.get_object(pk)
         film.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-@api_view(['GET', 'POST'])
-def theater_list(request, format=None):
+class TheaterList(APIView):
     """
     List all theaters, or create a new theater.
     """
-    if request.method == 'GET':
+    def get(self, request, format=None):
         theaters = Theater.objects.all()
-        serializer = TheaterSerializer(theaters, many=True)
-        return Response(serializer.data)
+        serialized_theaters = TheaterSerializer(theaters, many=True)
+        return Response(serialized_theaters.data)
 
-    elif request.method == 'POST':
-        serializer = TheaterSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, format=None):
+        theater = TheaterSerializer(data=request.data)
+        if theater.is_valid():
+            theater.save()
+            return Response(theater.data, status=status.HTTP_201_CREATED)
+        return Response(theater.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET', 'PUT', 'DELETE'])
-def theater_detail(request, pk, format=None):
+class TheaterDetail(APIView):
     """
     Retrieve, update or delete a theater instance.
     """
-    try:
-        theater = Theater.objects.get(pk=pk)
-    except Theater.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+    def get_object(self, pk):
+        try:
+            return Theater.objects.get(pk=pk)
+        except Theater.DoesNotExist:
+            raise Http404
 
-    if request.method == 'GET':
-        serializer = TheaterSerializer(theater)
-        return Response(serializer.data)
+    def get(self, request, pk, format=None):
+        theater = self.get_object(pk)
+        return Response(serialized_theater.data)
 
-    elif request.method == 'PUT':
-        serializer = TheaterSerializer(theater, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def put(self, request, pk, format=None):
+        theater = self.get_object(pk)
+        serialized_theater = TheaterSerializer(theater, data=request.data)
+        if serialized_theater.is_valid():
+            serialized_theater.save()
+            return Response(serialized_theater.data)
+        return Response(serialized_theater.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == 'DELETE':
+    def delete(self, request, pk, format=None):
+        theater= self.get_object(pk)
         theater.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-@api_view(['GET', 'POST'])
-def genre_list(request, format=None):
+class GenreList(APIView):
     """
     List all snippets, or create a new film.
     """
-    if request.method == 'GET':
+    def get(self, request, format=None):
         genres = Genre.objects.all()
-        serializer = GenreSerializer(genres, many=True)
-        return Response(serializer.data)
+        serialized_genres = GenreSerializer(genres, many=True)
+        return Response(serialized_genres.data)
 
-    elif request.method == 'POST':
-        serializer = GenreSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, format=None):
+        genre = GenreSerializer(data=request.data)
+        if genre.is_valid():
+            genre.save()
+            return Response(genre.data, status=status.HTTP_201_CREATED)
+        return Response(genre.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET', 'PUT', 'DELETE'])
-def genre_detail(request, pk, format=None):
+class GenreDetail(APIView):
     """
     Retrieve, update or delete a film instance.
     """
-    try:
-        genre = Genre.objects.get(pk=pk)
-    except Genre.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+    def get_object(self, pk):
+        try:
+            return Genre.objects.get(pk=pk)
+        except Genre.DoesNotExist:
+            raise Http404
 
-    if request.method == 'GET':
-        serializer = GenreSerializer(genre)
-        return Response(serializer.data)
+    def get(self, request, pk, format=None):
+        genre = self.get_object(pk)
+        serialized_genre = GenreSerializer(genre)
+        return Response(serialized_genre.data)
 
-    elif request.method == 'PUT':
-        serializer = GenreSerializer(film, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def put(self, request, pk, format=None):
+        genre = self.get_object(pk)
+        serialized_genre = GenreSerializer(film, data=request.data)
+        if serialized_genre.is_valid():
+            serialized_film.save()
+            return Response(serialized_film.data)
+        return Response(serialized_film.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == 'DELETE':
+    def delete(self, request, pk, format=None):
+        genre = self.get_object(pk)
         genre.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
